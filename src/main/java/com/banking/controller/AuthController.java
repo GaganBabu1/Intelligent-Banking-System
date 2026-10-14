@@ -3,6 +3,7 @@ package com.banking.controller;
 import com.banking.dto.AuthResponse;
 import com.banking.dto.RegisterRequest;
 import com.banking.services.UserService;
+import com.banking.dto.LoginRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
