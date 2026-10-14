@@ -2,7 +2,9 @@ package com.banking.controller;
 
 import com.banking.dto.BankAccountResponse;
 import com.banking.dto.CreateAccountRequest;
+import com.banking.dto.TransactionRequest;
 import com.banking.services.AccountService;
+import com.banking.services.TransactionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,10 +29,15 @@ import java.util.List;
 public class BankAccountController {
 
     private final AccountService accountService;
+    private final TransactionService transactionService;
 
-    public BankAccountController(AccountService accountService) {
-        this.accountService = accountService;
-    }
+    public BankAccountController(
+        AccountService accountService,
+        TransactionService transactionService
+) {
+    this.accountService = accountService;
+    this.transactionService = transactionService;
+}
 
     @PostMapping
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
@@ -65,4 +72,30 @@ public class BankAccountController {
     ) {
         return ResponseEntity.ok(accountService.getUserAccounts(userId));
     }
+
+    @PostMapping("/deposit")
+@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+public ResponseEntity<BankAccountResponse> deposit(
+        @Valid @RequestBody TransactionRequest request
+) {
+    BankAccountResponse response = transactionService.deposit(
+            request.getAccountNumber(),
+            request.getAmount()
+    );
+
+    return ResponseEntity.ok(response);
+}
+
+@PostMapping("/withdraw")
+@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+public ResponseEntity<BankAccountResponse> withdraw(
+        @Valid @RequestBody TransactionRequest request
+) {
+    BankAccountResponse response = transactionService.withdraw(
+            request.getAccountNumber(),
+            request.getAmount()
+    );
+
+    return ResponseEntity.ok(response);
+}
 }
