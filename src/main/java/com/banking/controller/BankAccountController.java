@@ -5,6 +5,7 @@ import com.banking.dto.CreateAccountRequest;
 import com.banking.dto.TransactionRequest;
 import com.banking.services.AccountService;
 import com.banking.services.TransactionService;
+import com.banking.dto.TransferRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -86,16 +87,29 @@ public ResponseEntity<BankAccountResponse> deposit(
     return ResponseEntity.ok(response);
 }
 
-@PostMapping("/withdraw")
-@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-public ResponseEntity<BankAccountResponse> withdraw(
-        @Valid @RequestBody TransactionRequest request
-) {
-    BankAccountResponse response = transactionService.withdraw(
-            request.getAccountNumber(),
-            request.getAmount()
-    );
+    @PostMapping("/withdraw")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<BankAccountResponse> withdraw(
+            @Valid @RequestBody TransactionRequest request
+    ) {
+        BankAccountResponse response = transactionService.withdraw(
+                request.getAccountNumber(),
+                request.getAmount()
+        );
 
-    return ResponseEntity.ok(response);
-}
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/transfer")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<BankAccountResponse> transfer(
+            @Valid @RequestBody TransferRequest request
+    ) {
+        BankAccountResponse response = transactionService.transfer(
+                request.getFromAccount(),
+                request.getToAccount(),
+                request.getAmount()
+        );
+
+        return ResponseEntity.ok(response);
+    }
 }
