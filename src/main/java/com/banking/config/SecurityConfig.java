@@ -4,6 +4,11 @@ import com.banking.security.JwtAuthenticationFilter;
 import com.banking.security.JwtTokenProvider;
 import com.banking.security.JwtAccessDeniedHandler;
 import com.banking.security.JwtAuthenticationEntryPoint;
+import com.banking.repository.UserRepository;
+import com.banking.entity.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,13 +35,18 @@ public class SecurityConfig {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config
+    ) throws Exception {
         return config.getAuthenticationManager();
     }
 
@@ -91,5 +101,23 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return username -> {
+            User user = userRepository.findByEmail(username)
+                    .orElseThrow(() ->
+                            new UsernameNotFoundException("User not found: " + username)
+                    );
+
+            return org.springframework.security.core.userdetails.User
+                    .withUsername(user.getEmail())
+                    .password(user.getPassword())
+                    .roles(user.getRole().name())
+                    .disabled(!user.getEnabled())
+                    .accountLocked(!user.getAccountNonLocked())
+                    .build();
+        };
     }
 }
