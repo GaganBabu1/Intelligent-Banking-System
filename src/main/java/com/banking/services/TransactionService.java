@@ -119,4 +119,103 @@ public class TransactionService {
                 account.getFreezeReason()
         );
     }
+
+    public BankAccountResponse transfer(
+        Long fromAccountNumber,
+        Long toAccountNumber,
+        Double amount
+) {
+    if (fromAccountNumber.equals(toAccountNumber)) {
+        throw new InvalidAmountException(
+                "Cannot transfer to the same account"
+        );
+    }
+
+    if (amount == null || amount <= 0) {
+        throw new InvalidAmountException(
+                "Amount must be greater than 0"
+        );
+    }
+
+    BankAccount sender = accountRepository.findById(fromAccountNumber)
+            .orElseThrow(() ->
+                    new AccountNotFoundException(fromAccountNumber)
+            );
+
+    BankAccount receiver = accountRepository.findById(toAccountNumber)
+            .orElseThrow(() ->
+                    new AccountNotFoundException(toAccountNumber)
+            );
+
+    ensureAccountIsActive(sender);
+    ensureAccountIsActive(receiver);
+
+    if (amount > sender.getBalance()) {
+        throw new InsufficientBalanceException(
+                "Insufficient balance for transfer"
+        );
+    }
+
+    if (sender.getDailyTransferUsed() + amount
+            > sender.getDailyTransferLimit()) {
+        throw new IllegalStateException(
+                "Daily transfer limit exceeded"
+        );
+    }
+
+    Double senderBalanceBefore = sender.getBalance();
+    Double receiverBalanceBefore = receiver.getBalance();
+
+    sender.setBalance(sender.getBalance() - amount);
+    sender.setDailyTransferUsed(
+            sender.getDailyTransferUsed() + amount
+    );
+    sender.setUpdatedAt(LocalDateTime.now());
+
+    receiver.setBalance(receiver.getBalance() + amount);
+    receiver.setUpdatedAt(LocalDateTime.now());
+
+    BankAccount savedSender = accountRepository.save(sender);
+    BankAccount savedReceiver = accountRepository.save(receiver);
+
+    LocalDateTime now = LocalDateTime.now();
+
+    Transaction outgoingTransaction = new Transaction();
+    outgoingTransaction.setFromAccount(savedSender);
+    outgoingTransaction.setToAccount(savedReceiver);
+    outgoingTransaction.setAmount(amount);
+    outgoingTransaction.setType(
+            Transaction.TransactionType.TRANSFER_OUT
+    );
+    outgoingTransaction.setStatus(
+            Transaction.TransactionStatus.SUCCESS
+    );
+    outgoingTransaction.setDescription(
+            "Transfer to account " + toAccountNumber
+    );
+    outgoingTransaction.setBalanceBefore(senderBalanceBefore);
+    outgoingTransaction.setBalanceAfter(savedSender.getBalance());
+    outgoingTransaction.setCreatedAt(now);
+    transactionRepository.save(outgoingTransaction);
+
+    Transaction incomingTransaction = new Transaction();
+    incomingTransaction.setFromAccount(savedSender);
+    incomingTransaction.setToAccount(savedReceiver);
+    incomingTransaction.setAmount(amount);
+    incomingTransaction.setType(
+            Transaction.TransactionType.TRANSFER_IN
+    );
+    incomingTransaction.setStatus(
+            Transaction.TransactionStatus.SUCCESS
+    );
+    incomingTransaction.setDescription(
+            "Transfer from account " + fromAccountNumber
+    );
+    incomingTransaction.setBalanceBefore(receiverBalanceBefore);
+    incomingTransaction.setBalanceAfter(savedReceiver.getBalance());
+    incomingTransaction.setCreatedAt(now);
+    transactionRepository.save(incomingTransaction);
+
+    return toResponse(savedSender);
+}
 }
