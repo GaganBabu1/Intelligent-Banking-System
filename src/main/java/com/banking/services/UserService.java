@@ -6,6 +6,8 @@ import com.banking.dto.RegisterRequest;
 import com.banking.entity.User;
 import com.banking.repository.UserRepository;
 import com.banking.security.JwtTokenProvider;
+import com.banking.dto.UpdateProfileRequest;
+import com.banking.dto.UserDTO;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -112,4 +114,43 @@ public class UserService {
                 user.getRole().toString()
         );
     }
+
+    public UserDTO getUserProfile(Long userId) {
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    return convertToDTO(user);
+}
+
+public UserDTO updateUserProfile(
+        Long userId,
+        UpdateProfileRequest request
+) {
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    user.setFirstName(request.getFirstName());
+    user.setLastName(request.getLastName());
+    user.setPhoneNumber(request.getPhoneNumber());
+    user.setAddress(request.getAddress());
+    user.setUpdatedAt(LocalDateTime.now());
+
+    User updatedUser = userRepository.save(user);
+    return convertToDTO(updatedUser);
+}
+
+private UserDTO convertToDTO(User user) {
+    return new UserDTO(
+            user.getId(),
+            user.getFirstName(),
+            user.getLastName(),
+            user.getEmail(),
+            user.getPhoneNumber(),
+            user.getAddress(),
+            user.getRole().toString(),
+            user.getEnabled(),
+            user.getCreatedAt(),
+            user.getLastLogin()
+    );
+}
 }
