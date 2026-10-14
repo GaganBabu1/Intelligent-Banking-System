@@ -6,6 +6,7 @@ import com.banking.entity.BankAccount;
 import com.banking.entity.User;
 import com.banking.repository.BankAccountRepository;
 import com.banking.repository.UserRepository;
+import com.banking.exception.AccountNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
