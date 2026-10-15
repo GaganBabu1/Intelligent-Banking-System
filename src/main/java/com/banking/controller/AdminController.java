@@ -3,6 +3,8 @@ package com.banking.controller;
 import com.banking.dto.BankAccountResponse;
 import com.banking.dto.UserDTO;
 import com.banking.services.AdminService;
+import com.banking.dto.TransactionAnomalyResponse;
+import com.banking.services.AnomalyDetectionService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,10 +30,15 @@ import java.util.Map;
 public class AdminController {
 
     private final AdminService adminService;
+    private final AnomalyDetectionService anomalyDetectionService;
 
-    public AdminController(AdminService adminService) {
-        this.adminService = adminService;
-    }
+    public AdminController(
+        AdminService adminService,
+        AnomalyDetectionService anomalyDetectionService
+) {
+    this.adminService = adminService;
+    this.anomalyDetectionService = anomalyDetectionService;
+}
 
     @GetMapping("/users")
     public ResponseEntity<List<UserDTO>> getAllUsers() {
@@ -112,4 +119,11 @@ public class AdminController {
         adminService.resetDailyTransferLimit();
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/insights/anomaly-queue")
+public ResponseEntity<List<TransactionAnomalyResponse>> getAnomalyQueue() {
+    return ResponseEntity.ok(
+            anomalyDetectionService.getAttentionQueue()
+    );
+}
 }
