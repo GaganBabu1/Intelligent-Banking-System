@@ -5,6 +5,7 @@ import com.banking.dto.RegisterRequest;
 import com.banking.services.UserService;
 import com.banking.dto.LoginRequest;
 import jakarta.validation.Valid;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -42,4 +43,15 @@ public class AuthController {
         AuthResponse response = userService.login(request);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/refresh")
+public ResponseEntity<AuthResponse> refreshToken(
+        @RequestBody Map<String, String> request
+) {
+    String refreshToken = request.get("refreshToken");
+
+    AuthResponse response = userService.refreshToken(refreshToken);
+
+    return ResponseEntity.ok(response);
+}
 }

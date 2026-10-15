@@ -153,4 +153,36 @@ private UserDTO convertToDTO(User user) {
             user.getLastLogin()
     );
 }
+public AuthResponse refreshToken(String refreshToken) {
+    if (refreshToken == null || refreshToken.isBlank()) {
+        throw new IllegalArgumentException("Refresh token is required");
+    }
+
+    if (!jwtTokenProvider.validateToken(refreshToken)) {
+        throw new IllegalArgumentException("Invalid refresh token");
+    }
+
+    String email = jwtTokenProvider.getEmailFromToken(refreshToken);
+
+    User user = userRepository.findByEmail(email)
+            .orElseThrow(() ->
+                    new IllegalArgumentException("User not found")
+            );
+
+    String newAccessToken = jwtTokenProvider.generateAccessToken(
+            user.getEmail(),
+            user.getRole().toString(),
+            user.getId()
+    );
+
+    return new AuthResponse(
+            newAccessToken,
+            refreshToken,
+            user.getId(),
+            user.getEmail(),
+            user.getFirstName(),
+            user.getLastName(),
+            user.getRole().toString()
+    );
+}
 }
