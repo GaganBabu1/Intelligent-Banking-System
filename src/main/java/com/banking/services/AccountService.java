@@ -83,4 +83,68 @@ public class AccountService {
                 account.getFreezeReason()
         );
     }
+
+    public BankAccountResponse freezeAccount(
+        Long accountNumber,
+        String reason
+) {
+    BankAccount account = accountRepository.findById(accountNumber)
+            .orElseThrow(() ->
+                    new AccountNotFoundException(accountNumber)
+            );
+
+    account.setAccountStatus(BankAccount.AccountStatus.FROZEN);
+    account.setFreezeDate(LocalDateTime.now());
+    account.setFreezeReason(
+            reason == null || reason.isBlank()
+                    ? "Account frozen by admin"
+                    : reason
+    );
+    account.setUpdatedAt(LocalDateTime.now());
+
+    return toResponse(accountRepository.save(account));
+}
+
+public BankAccountResponse unfreezeAccount(Long accountNumber) {
+    BankAccount account = accountRepository.findById(accountNumber)
+            .orElseThrow(() ->
+                    new AccountNotFoundException(accountNumber)
+            );
+
+    account.setAccountStatus(BankAccount.AccountStatus.ACTIVE);
+    account.setFreezeDate(null);
+    account.setFreezeReason(null);
+    account.setUpdatedAt(LocalDateTime.now());
+
+    return toResponse(accountRepository.save(account));
+}
+
+public BankAccountResponse closeAccount(Long accountNumber) {
+    BankAccount account = accountRepository.findById(accountNumber)
+            .orElseThrow(() ->
+                    new AccountNotFoundException(accountNumber)
+            );
+
+    if (account.getBalance() > 0) {
+        throw new IllegalStateException(
+                "Cannot close an account with a remaining balance"
+        );
+    }
+
+    account.setAccountStatus(BankAccount.AccountStatus.CLOSED);
+    account.setUpdatedAt(LocalDateTime.now());
+
+    return toResponse(accountRepository.save(account));
+}
+
+public void resetDailyTransferLimit() {
+    List<BankAccount> accounts = accountRepository.findAll();
+
+    accounts.forEach(account -> {
+        account.setDailyTransferUsed(0.0);
+        account.setUpdatedAt(LocalDateTime.now());
+    });
+
+    accountRepository.saveAll(accounts);
+}
 }
