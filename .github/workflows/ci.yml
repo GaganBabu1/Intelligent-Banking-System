@@ -28,7 +28,9 @@ jobs:
           cache: maven
 
       - name: Test and build backend
-        run: ./mvnw --batch-mode test package
+        run: |
+          chmod +x ./mvnw
+          ./mvnw --batch-mode test package
 
   frontend:
     name: Frontend test and build
