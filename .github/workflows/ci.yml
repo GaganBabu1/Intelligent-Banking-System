@@ -31,7 +31,7 @@ jobs:
 
 # Frontend
 
-frontend:
+
   name: Frontend(test+build)
   runs-on: ubuntu-latest
   env:
