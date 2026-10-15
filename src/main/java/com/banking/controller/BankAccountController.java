@@ -6,6 +6,10 @@ import com.banking.dto.TransactionRequest;
 import com.banking.services.AccountService;
 import com.banking.services.TransactionService;
 import com.banking.dto.TransferRequest;
+import com.banking.dto.TransactionDTO;
+import com.banking.services.TransactionHistoryService;
+import org.springframework.data.domain.Page;
+import org.springframework.web.bind.annotation.RequestParam;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,13 +35,16 @@ public class BankAccountController {
 
     private final AccountService accountService;
     private final TransactionService transactionService;
+    private final TransactionHistoryService transactionHistoryService;
 
     public BankAccountController(
         AccountService accountService,
-        TransactionService transactionService
+        TransactionService transactionService,
+        TransactionHistoryService transactionHistoryService
 ) {
     this.accountService = accountService;
     this.transactionService = transactionService;
+    this.transactionHistoryService = transactionHistoryService;
 }
 
     @PostMapping
@@ -112,4 +119,53 @@ public ResponseEntity<BankAccountResponse> deposit(
 
         return ResponseEntity.ok(response);
     }
+
+        @GetMapping("/{id}/transactions")
+        @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+        public ResponseEntity<Page<TransactionDTO>> getTransactions(
+                @PathVariable Long id,
+                @RequestParam(defaultValue = "0") int page,
+                @RequestParam(defaultValue = "10") int size
+        ) {
+        return ResponseEntity.ok(
+                transactionHistoryService.getTransactionHistory(id, page, size)
+        );
+        }
+
+        @GetMapping("/{id}/transactions/outgoing")
+        @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+        public ResponseEntity<Page<TransactionDTO>> getOutgoingTransactions(
+                @PathVariable Long id,
+                @RequestParam(defaultValue = "0") int page,
+                @RequestParam(defaultValue = "10") int size
+        ) {
+        return ResponseEntity.ok(
+                transactionHistoryService.getOutgoingTransactions(id, page, size)
+        );
+        }
+
+        @GetMapping("/{id}/transactions/incoming")
+        @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+        public ResponseEntity<Page<TransactionDTO>> getIncomingTransactions(
+                @PathVariable Long id,
+                @RequestParam(defaultValue = "0") int page,
+                @RequestParam(defaultValue = "10") int size
+        ) {
+        return ResponseEntity.ok(
+                transactionHistoryService.getIncomingTransactions(id, page, size)
+        );
+        }
+
+        @GetMapping("/transaction/{transactionRef}")
+        @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+        public ResponseEntity<TransactionDTO> getTransactionDetails(
+                @PathVariable String transactionRef
+        ) {
+        TransactionDTO transaction =
+                transactionHistoryService.getTransactionByRef(transactionRef);
+
+        return transaction != null
+                ? ResponseEntity.ok(transaction)
+                : ResponseEntity.notFound().build();
+        }
 }
