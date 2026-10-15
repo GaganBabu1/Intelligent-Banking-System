@@ -125,6 +125,11 @@ public class TransactionService {
         Long toAccountNumber,
         Double amount
 ) {
+        if (fromAccountNumber == null || toAccountNumber == null) {
+    throw new InvalidAmountException(
+            "Both sender and receiver accounts are required"
+    );
+}
     if (fromAccountNumber.equals(toAccountNumber)) {
         throw new InvalidAmountException(
                 "Cannot transfer to the same account"
