@@ -1,4 +1,4 @@
-name: Java CI
+name: Banking Application CI
 
 on:
   push:
@@ -12,7 +12,8 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  backend:
+    name: Backend test and build
     runs-on: ubuntu-latest
 
     steps:
@@ -26,34 +27,15 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Build project
-        run: mvn --batch-mode -DskipTests package
+      - name: Test and build backend
+        run: ./mvnw --batch-mode test package
 
-# Frontend
+  frontend:
+    name: Install frontend dependencies
+    run: npm ci
 
+    name: Lint frontend
+    run: npm run lint
 
-  name: Frontend(test+build)
-  runs-on: ubuntu-latest
-  env:
-    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  defaults:
-    run:
-      working-directory: banking-frontend/banking-frontend
-
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-
-    - name: Setup Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        cache: npm
-        cache-dependency-path: banking-frontend/banking-frontend/package-lock.json
-
-
-    - name: Install dependencies
-      run: npm install
-
-    - name: Build
-      run: npm run build
+    name: Build frontend
+    run: npm run build
